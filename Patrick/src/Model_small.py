@@ -1,9 +1,9 @@
 import steps.interface
-import steps.model as stmodel
-import steps.geom as stgeom
+import steps.model as stmodel   # chem species, reactions and diffusion
+import steps.geom as stgeom     # compartments, surfaces and mesh based geometry
 import steps.rng as strng
-import steps.sim as stsim
-import steps.saving as stsave
+import steps.sim as stsim       # stochastic solver: TetOpSplit
+import steps.saving as stsave   # how and where sim results stored
 from src.Utilities import molar_to_molecules, nostdout
 import numpy as np
 import os
@@ -12,7 +12,7 @@ import os
 def initialize_ellipsoid_mesh(mesh_path, scale, nucleus_volume, cytosol_volume, extracellular_volume, cell_surface_system):
     # Load mesh and compartments
     assert os.path.isfile(mesh_path), "mesh_path does not exist. Please check the path and try again."
-    mesh = stgeom.TetMesh.LoadAbaqus(mesh_path, scale=scale)
+    mesh = stgeom.TetMesh.LoadAbaqus(mesh_path, scale=scale) # loads tetrahedral mesh
 
     with mesh:
 
@@ -70,12 +70,12 @@ def initialize_ellipsoid_mesh(mesh_path, scale, nucleus_volume, cytosol_volume, 
         # Zelläußeres
         exo = stgeom.Compartment(exo_tets, extracellular_volume, name="exo")
 
-        # Zellmembran
+        # Zellmembran: between cytosol and extracellular space, membrane reactions occur here
         cell_surface = stgeom.Patch(cyt.surface & exo.surface, cyt, exo, cell_surface_system, name="cell_surface")
 
         # DIFFUSIONS BARRIERE, why is this necessary anywhere? We have discrete volumes anyways, so I dont think this makes sense
         # Zellkernmembran
-        nuc_mem = stgeom.DiffBoundary(nuc.surface, name="nuc_mem")
+        nuc_mem = stgeom.DiffBoundary(nuc.surface, name="nuc_mem") # barrier for nuc
     return mesh, exo_tets, cytosol_tets, nuc_tets
 
 
@@ -115,12 +115,12 @@ def create_model(p, species_names, mesh_path, mesh_scale, plot_only_run):
       and membrane patch.
     - Sets up a stochastic simulation engine with result selectors for species counts.
     """
-    mdl = stmodel.Model()
+    mdl = stmodel.Model() # global model
     r = stmodel.ReactionManager()
     species_dict = {}
 
     # Create volume and surface systems
-    with mdl:
+    with mdl: # reaction diffusion environments
         cytosol_volume = stmodel.VolumeSystem(name="cytosol_volume")
         nucleus_volume = stmodel.VolumeSystem(name="nucleus_volume")
         extracellular_volume = stmodel.VolumeSystem(name="extracellular_volume")
@@ -132,40 +132,41 @@ def create_model(p, species_names, mesh_path, mesh_scale, plot_only_run):
 
         # Cytoplasma/Cytosol
         with cytosol_volume:
-            # ERK Deaktivierung
+            # ERK Deaktivierung (dephosphorylation)
             species_dict["ERKp"] + species_dict["P3"] > r[6] > species_dict["ERK"] + species_dict["P3"]
             r[6].K = p["k[666]"]
             #Cytoplasm diffusion
             stmodel.Diffusion(species_dict["ERK"], p["DC"])
             stmodel.Diffusion(species_dict["ERKp"], p["DC"])
-            stmodel.Diffusion(species_dict["P3"], p["DC"] * 2)
-            stmodel.Diffusion(species_dict["GAP"], p["DC"]/4)
+            stmodel.Diffusion(species_dict["P3"], p["DC"] * 2) # faster
+            stmodel.Diffusion(species_dict["GAP"], p["DC"]/4) # slower
 
         # Extracellular volume
-        with extracellular_volume:
+        with extracellular_volume: # free diffusion of EGF
             stmodel.Diffusion(species_dict["EGF"], p["DC"]/10)
 
         # Nucleus volume
         with nucleus_volume:
-            species_dict["ERKp"] > r[7] > species_dict["ERKpp"]
+            species_dict["ERKp"] > r[7] > species_dict["ERKpp"] # phosphorylation
             r[7].K = 1e8
-            stmodel.Diffusion(species_dict["ERKpp"], p["DC"])
+            stmodel.Diffusion(species_dict["ERKpp"], p["DC"]) # ERKpp moves within nucleus
 
         # Surface system (cell membrane)
-        with cell_surface_system:
-            species_dict["EGFR"].s + species_dict["EGF"].o < r[1] > species_dict["EGF_EGFR"].s
-            species_dict["EGF_EGFR"].s + species_dict["EGF_EGFR"].s < r[2] > species_dict["EGF_EGFR2"].s
-            species_dict["EGF_EGFR2"].s < r[3] > species_dict["EGF_EGFRp2"].s
-            species_dict["EGF_EGFRp2"].s + species_dict["GAP"].i < r[4] > species_dict["EGF_EGFRp2_GAP"].s
-            species_dict["EGF_EGFRp2_GAP"].s + species_dict["ERK"].i < r[5] > species_dict["EGF_EGFRp2_GAP"].s + species_dict["ERKp"].i
+        with cell_surface_system: # EGF-EGFR signaling cascade
+            species_dict["EGFR"].s + species_dict["EGF"].o < r[1] > species_dict["EGF_EGFR"].s                                              # EFG binds EGFR
+            species_dict["EGF_EGFR"].s + species_dict["EGF_EGFR"].s < r[2] > species_dict["EGF_EGFR2"].s                                    # receptor dimerizes
+            species_dict["EGF_EGFR2"].s < r[3] > species_dict["EGF_EGFRp2"].s                                                               # phosphorylation
+            species_dict["EGF_EGFRp2"].s + species_dict["GAP"].i < r[4] > species_dict["EGF_EGFRp2_GAP"].s                                  # binds GAP
+            species_dict["EGF_EGFRp2_GAP"].s + species_dict["ERK"].i < r[5] > species_dict["EGF_EGFRp2_GAP"].s + species_dict["ERKp"].i     # activates ERK to ERKp
 
+            # reaction rates
             r[1].K = 3e7, 38e-4   # 1/Ms
             r[2].K = 1e7 * 100, 0.1   # 1/Ms
             r[3].K = 1 * 100, 0.01  # 1/s
             r[4].K = 1e6 * 100 , 0.2   # 1/Ms 1e6, 0.2
             r[5].K = p["k[0]"], 0.1 #1e8 * c1, 0.1 * c1
 
-            stmodel.Diffusion(species_dict["EGFR"], p["DC"]/10)
+            stmodel.Diffusion(species_dict["EGFR"], p["DC"]/10) # slow diffusion
             stmodel.Diffusion(species_dict["EGF_EGFR"], p["DC"]/20)
             stmodel.Diffusion(species_dict["EGF_EGFR2"], p["DC"]/40)
             stmodel.Diffusion(species_dict["EGF_EGFRp2"], p["DC"]/40)
@@ -181,7 +182,7 @@ def create_model(p, species_names, mesh_path, mesh_scale, plot_only_run):
     system_volume = mesh.Vol
 
     # Initialize RNG and Simulation
-    rng = strng.RNG("mt19937", 512, 2903)
+    rng = strng.RNG("mt19937", 512, 2903) # (type of RNG (mt: mersenne twister), number of pregenerated random numbers, seed value to initialize the RNG)
     # with nostdout(): #doesnt work, crashes the freaking sim...
     partition = stgeom.LinearMeshPartition(mesh, 1, 1, stsim.MPI.nhosts)
     simulation = stsim.Simulation("TetOpSplit", mdl, mesh, rng, False, partition)
@@ -200,7 +201,7 @@ def create_model(p, species_names, mesh_path, mesh_scale, plot_only_run):
             "EGF_EGFRp2_GAP": rs.SUM(rs.TRIS(cytosol_tets.surface).EGF_EGFRp2_GAP.Count),
             "ERK_cyto": rs.SUM(rs.TETS(cytosol_tets).ERK.Count),
             "ERKp_cyto": rs.SUM(rs.TETS(cytosol_tets).ERKp.Count),
-            # "ERKp_nuc": rs.SUM(rs.TETS(nuc_tets).ERKp.Count),
+            "ERKp_nuc": rs.SUM(rs.TETS(nuc_tets).ERKp.Count),
             "ERKpp": rs.SUM(rs.TETS(nuc_tets).ERKpp.Count),
             # "Concentrations": rs.TETS().LIST(species_dict["EGF_EGFR"],
             #                                  species_dict["ERK"],

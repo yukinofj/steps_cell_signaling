@@ -186,8 +186,8 @@ class SimManager:
                 with stsave.XDMFHandler(checked_save_path, hdf5DatasetKwArgs=options) as hdf:
                     self.simulation.toDB(hdf, uid = self.runname)
                     self.simulation.newRun()
-
-                    set_inital_values(self, factor = 1) # TODO: MAYBE DONT HARDCODE BRO
+                    
+                    set_inital_values(self, factor = self.initial_factor) # TODO: MAYBE DONT HARDCODE BRO
 
                     # self.simulation.exo.EGF.Count = self.parameters["EGF_0"]
                     # self.simulation.cell_surface.EGFR.Count = self.parameters["EGFR_0"]

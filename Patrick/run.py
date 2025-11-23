@@ -38,10 +38,10 @@ try:
     sm = SimManager(parameters=p,
                     # mesh_path = "/home/pb/steps_cell_signaling/Patrick/meshes/sph_1.0.inp",
                     # mesh_path = "/home/pb/steps_cell_signaling/Patrick/meshes/elipsoid_4.5.inp",
-                    mesh_path = "/home/pb/steps_cell_signaling/Patrick/meshes_ellipsoidity/ellipsoidity_0.0.inp",
+                    mesh_path = f"{base_path}Patrick/meshes_ellipsoidity/ellipsoidity_0.0.inp",
                     #save_path ="/home/pb/steps_cell_signaling/Patrick/saved_objects/testing/test2",  #without the .h5 suffix, but full file path please
                     # mesh_path=f"{base_path}Patrick/meshes_ellipsoidity/ellipsoidity_0.8.inp",
-                    save_path=f"{base_path}Patrick/saved_objects/testing/test3",  # Full file path without the .h5 suffix
+                    save_path=f"{base_path}Patrick/saved_objects/ellipsoidity_runs/testrun1",  # Full file path without the .h5 suffix
                     parallel = True, # no effect so far
                     runname = "test",
                     plot_only_run = False,

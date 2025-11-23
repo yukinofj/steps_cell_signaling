@@ -1,73 +1,104 @@
 import steps.interface
-import steps.saving as stsave
+import steps.API_2.saving as stsave
+import matplotlib
+matplotlib.use('Agg')
 from matplotlib import pyplot as plt
+#import matplotlib.cm as cm
 import seaborn as sns
 import h5py
 import numpy as np
 import re
 import math
+from matplotlib import rc
+from parameters import p
 
-def traverse_datasets(hdf_file):
+# input
+run = "testrun"
+n_reps = 100
+ellip_value = [0.0, 1.0] # np.linspace(0.1, 1.0, 10)
+runnr = 9
+dt = p["time step"]
+t_end = p["endtime"]
 
-    """Traverse all datasets across all groups in HDF5 file."""
-    def h5py_dataset_iterator(g, prefix=''):
-        for key in g.keys():
-            item = g[key]
-            path = '{}/{}'.format(prefix, key)
-            if isinstance(item, h5py.Dataset): # test for dataset
-                yield (path, item)
-            elif isinstance(item, h5py.Group): # test for group (go down)
-                yield from h5py_dataset_iterator(item, path)
+home_dir = f"/home/yukinofj/code/steps_cell_signaling/Patrick/saved_objects/run{runnr}"
+fig_dir = "/home/yukinofj/code/steps_cell_signaling/Patrick/figures"
 
-    with h5py.File(hdf_file, 'r') as f:
-        for (path, dset) in h5py_dataset_iterator(f):
-            print(path, dset)
-
-    return None
-
-
-
-#%%
-# hdf_path = "/home/pb/steps_cell_signaling/Patrick/saved_objects/ellipsoidity_2/mesh_0/result"
-hdf_path = "/home/pb/steps_cell_signaling/Patrick/saved_objects/testing/test"
-# traverse_datasets(hdf_path + ".h5")
-# hdf = stsave.HDF5Handler("/home/pb/steps_cell_signaling/Patrick/saved_objects/initial_run/parallel_run_1")
-# hdf = stsave.HDF5Handler("/home/pb/steps_cell_signaling/Patrick/saved_objects/full_run/large_model")
-hdf = stsave.HDF5Handler(hdf_path)
-# with stsave.HDF5Handler("/home/pb/steps_cell_signaling/Patrick/saved_objects/initial_run/parallel_run_1") as hdf:
-# results = hdf["long_run"].results
-results = hdf["test"].results
+# latex formatting
+rc("text", usetex=True)
+species_latex = {
+    "EGF":              r"EGF",
+    "EGF_EGFR":         r"EGF-EGFR",
+    "EGF_EGFR2":        r"(EGF-EGFR)$^2$",
+    "EGF_EGFRp2":       r"(EGF-EGFR$^p$)$^2$",
+    "EGF_EGFRp2_GAP":   r"EGF-EGFR$^p$)$^2$-GAP",
+    "ERK":              r"ERK",
+    "ERKp":             r"ERK$^p$",
+    "ERKpp":            r"ERK$^{pp}$"
+}
 
 # extract the species names for the result_selector label via regex
-full_labels = [x.labels for x in results]
-species_names = [re.search(r'\.(.*?)\.', s[0]).group(1) for s in full_labels if re.search(r'\.(.*?)\.', s[0])]
+def get_species_names(group):
+    #file_name = f"{run}{runnr}_ellip{E}_reps{n_reps}_dt{dt}_tend{t_end}"
+    #hdf_path = f"{home_dir}/{file_name}"
+    #hdf = stsave.HDF5Handler(hdf_path)
+    #group = hdf["testrun"]
+    results = group.results
+    labels = [r.labels[0] for r in results]
+    species = [re.search(r'\.(.*?)\.', lbl).group(1) for lbl in labels if re.search(r'\.(.*?)\.', lbl)]
+    return species
 
-# Plot all results
-num_species = len(species_names)
-grid_size = math.ceil(math.sqrt(num_species))  # Prefer a square layout
-n_rows, n_cols = grid_size, math.ceil(num_species / grid_size)
+def load_ellip_file(E):
+    file_name = f"{run}{runnr}_E{E}_N{n_reps}_dt{dt}_tend{t_end}"
+    hdf_path = f"{home_dir}/{file_name}"
+    hdf = stsave.HDF5Handler(hdf_path)
+    group = hdf["testrun"]
+    species_names = get_species_names(group) # hdf
+    results = group.results
+    means = []
+    stds = []
+    times = None
 
-fig, axes = plt.subplots(n_rows, n_cols, figsize=(15, 10))
+    for res in results:
+        data = np.array(res.data)[:,:,0]
+        if times is None:
+            times = res.time[0]
+        means.append(np.mean(data, axis = 0))
+        stds.append(np.std(data, axis = 0))
+    return species_names, times, np.array(means), np.array(stds)
+
+species_names, _, _, _ = load_ellip_file(ellip_value[0]) # for species list
+n_species = len(species_names)
+print("Species names: ", species_names)
+
+# subplot grid
+grid_size = math.ceil(math.sqrt(n_species))  # Prefer a square layout
+n_rows, n_cols = grid_size, math.ceil(n_species / grid_size)
+fig, axes = plt.subplots(n_rows, n_cols, figsize=(6, 4), constrained_layout=True)
 axes = axes.flatten()  # Flatten in case of 2D array
-
-for idx, (res, species_name) in enumerate(zip(results, species_names)):
-    mean_data = np.mean(res.data[:,:,0], axis=0)
-    std_data = np.std(res.data[:,:,0], axis=0)
+for ax in axes.flat:
+    ax.tick_params(axis='both', which='both', direction='in')
+colors = ["deepskyblue", "deeppink", "blueviolet"]
+# loop through species
+for idx, species in enumerate(species_names):
     ax = axes[idx]
-    # ax.scatter(res.time[0], mean_data, label='Mean', s = 0.5)
-    ax.plot(res.time[0], mean_data, label='Mean')
-    ax.fill_between(res.time[0], mean_data - std_data, mean_data + std_data, alpha=0.3, label='std')
-
-    if idx >= len(results) - n_cols:
+    # loop over ellip
+    for i, ellip in enumerate(ellip_value):
+        _, times, mean, std = load_ellip_file(ellip)
+        mean_data = mean[idx]
+        std_data = std[idx]
+        color = colors[i]
+        ax.plot(times, mean_data, label = f"$E ={ellip}$", color=color)
+        ax.fill_between(times, mean_data - std_data, mean_data + std_data, color=color, alpha=0.25, edgecolor="none")
+    label = species_latex.get(species, species)
+    ax.set_ylabel(label)
+    if idx >= n_species - n_cols:
         ax.set_xlabel('Time [s]')
-    # else:
-    #     ax.set_xticklabels([])
-    ax.set_ylabel(species_name)
-    # ax.legend()
-
+    ax.legend(fontsize= "small", frameon = False)
 # Hide any unused subplots
 for i in range(idx + 1, len(axes)):
     fig.delaxes(axes[i])
 
-plt.tight_layout()
-plt.show()
+ellip_str = "_".join(str(x) for x in ellip_value)
+output = f"{fig_dir}/plot_{run}{runnr}_E{ellip_str}_N{n_reps}_dt{dt}_tend{t_end}.pdf"
+plt.savefig(output, bbox_inches="tight", transparent=True)
+print(f"Plot saved to {output}.")

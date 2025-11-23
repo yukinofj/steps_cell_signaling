@@ -1,14 +1,10 @@
 {
     "users": {
-        "evelynstangneth": {
-            "EvelynsMacBook.local": "/Users/evelynstangneth/Signaling_repo/mnt/steps_cell_signaling/"
-        },
-        "evelyn": {
-            "kivdul": "/home/evelyn/shared_files/signaling_repo/steps_cell_signaling/"
-        },
-        "pb": {
-            "echo": "/home/pb/steps_cell_signaling/",
-            "kivdul": "/home/pb/steps_cell_signaling/"
+        "yukinofj": {
+            "Yukis-MacBook.local": "/Users/yuki/Desktop/MA/steps_cell_signaling/",
+            "eduroam-141-23-178-134.wlan.tu-berlin.de": "/Users/yuki/Desktop/MA/steps_cell_signaling/",
+            "kivdul.biologie.hu-berlin.de": "/home/yukinofj/code/steps_cell_signaling/",
+            "kivdul": "/home/yukinofj/code/steps_cell_signaling/"
         }
     }
 }

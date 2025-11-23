@@ -31,7 +31,7 @@ def fix_surface_holes(import_file, output_file):
 def create_ellipsoid_surface(center_x, center_y, center_z, r_a, r_b, r_c, mesh_size=0.05):
     """
     Creates an ellipsoid surface in Gmsh using the Python API.
-
+    # creates watertight 2d surfaces (like membranes); volumes are between surfaces
     Args:
         center_x (float): X-coordinate of the ellipsoid center.
         center_y (float): Y-coordinate of the ellipsoid center.
@@ -257,7 +257,7 @@ def create_full_mesh(
 
     # Generate the mesh in 3D
     gmsh.model.mesh.generate(3)
-    if output_file[-4:] != ".inp":
+    if output_file[-4:] != ".inp": # export
         print()
         print("Careful, suggested output file format compatible with STEPS and the rest of this software is .inp")
         print()

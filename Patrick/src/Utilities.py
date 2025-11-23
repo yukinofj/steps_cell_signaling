@@ -64,6 +64,7 @@ def set_inital_values(sim_manager, factor):
     - Assigns initial values from the dataframe to species in respective compartments.
     - If a value is NaN, it defaults to 0.
     - Any `SolverCallError` from STEPS API is caught and ignored.
+    parameter scan implementieren, zb EGF (excel exo init count) 
     '''
     df_path = f"{sim_manager.base_path}{sim_manager.parameters["big_model_mini_sph_df_path"]}"
     df = pd.read_excel(df_path)
@@ -136,5 +137,3 @@ def get_repo_path():
         return repo_path
     else:
         raise ValueError(f"No repository path found for user '{user}' and hostname '{hostname}'.")
-
-
