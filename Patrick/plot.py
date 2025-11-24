@@ -21,7 +21,7 @@ dt = p["time step"]
 t_end = p["endtime"]
 
 home_dir = f"/home/yukinofj/code/steps_cell_signaling/Patrick/saved_objects/run{runnr}"
-fig_dir = "/home/yukinofj/code/steps_cell_signaling/Patrick/figures"
+fig_dir = "/home/yukinofj/code/steps_cell_signaling/Patrick/figures/plot"
 
 # latex formatting
 rc("text", usetex=True)

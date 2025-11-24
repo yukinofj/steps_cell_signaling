@@ -1,35 +1,23 @@
-import sys
 import os
-from os import listdir
-from os.path import isfile, join, abspath, dirname
-sys.path.append(abspath(join(dirname(__file__), "../")))
+from os.path import join
 from src.SimManager import SimManager
 from parameters import p
 import numpy as np
-import copy
 import pandas as pd
-from scipy.constants import N_A
-import contextlib
-import io
-import json
 import steps.API_2.geom as stgeom
-import steps.API_2.sim as stsim
-import logging
-from Patrick.src.Utilities import get_repo_path
-
-
 # instead of running over ellipsoidity meshes, we can loop over concentrations, for example
 # read base count from excel file; modify value for each scan iteration; update simulations initial conditions before running
-# cd ~/code/steps_cell_signaling/Patrick; PYTHONPATH=$PWD python3 run_parameter_scan.py
+# cd ~/code/steps_cell_signaling; PYTHONPATH=$PWD python3 Patrick/run_parameter_scan.py
+
 
 # parameters
 name = "EGF"
 key = "EGF_initial_conc"
-runnr = 11
-n_reps = 50
+runnr = 12
+n_reps = 1
 ellipsoidity = 1.0
 base_c = p.get(f"{key}", 1.0)
-fractions = [0.8, 0.9, 0.95, 0.975, 0.99, 1.0]
+fractions = [0.1]#[0.8, 0.9, 0.95, 0.975, 0.99, 1.0]
 dt = p["time step"]
 t_end = p["endtime"]
 home_dir = "/home/yukinofj/code/steps_cell_signaling/"
@@ -42,7 +30,7 @@ base_count = c_row["exo init count"].values[0]
 print(f"Base count from excel: {base_count}")
 
 # save dir
-save_dir = os.path.join(home_dir, f"Patrick/saved_objects/parameter_scan/run{runnr}")
+save_dir = os.path.join(home_dir, f"Patrick/saved_objects/parameter_scan_{name}/run{runnr}")
 os.makedirs(save_dir, exist_ok=True)
 print(f"Directory {save_dir} created.")
 save_path = f"{save_dir}/PSrun{runnr}_{name}{fractions}_E{ellipsoidity}_N{n_reps}_dt{dt}_tend{t_end}"
@@ -78,7 +66,7 @@ def set_initial_values(sim_manager, factor):
             except steps.API_2.sim.SolverCallError:
                 pass 
 
-
+# run sim for each parameter in "fractions"
 for frac in fractions:
     file_name = f"PSrun{runnr}_{name}{frac}_E{ellipsoidity}_N{n_reps}_dt{dt}_tend{t_end}"
     save_path = os.path.join(save_dir, file_name)

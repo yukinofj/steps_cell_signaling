@@ -85,7 +85,7 @@ sm = plt.cm.ScalarMappable (cmap=cmap, norm=norm)
 sm.set_array([])
 cbar = fig.colorbar(sm, ax=axes, orientation="vertical", fraction=0.02, pad=0.04)
 cbar.set_label(f"{name}", rotation=270, labelpad=15)
-output = f"/home/yukinofj/code/steps_cell_signaling/Patrick/figures/plot_PSrun{runnr}_{name}{c_v}_E{ellipsoidity}_N{n_reps}_dt{dt}_tend{t_end}.pdf"
+output = f"/home/yukinofj/code/steps_cell_signaling/Patrick/figures/plot_PS/plot_PSrun{runnr}_{name}{c_v}_E{ellipsoidity}_N{n_reps}_dt{dt}_tend{t_end}.pdf"
 plt.savefig(output, bbox_inches="tight", transparent=True)
 print(f"Plot saved to {output}.")
 
