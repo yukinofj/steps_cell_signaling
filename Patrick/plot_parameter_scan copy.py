@@ -12,50 +12,11 @@ import re
 import math
 from matplotlib import rc
 from parameters import p
-import argparse
-
-# terminal input
-# python3 plot_parameter_scan.py 9 50 0.0 "linspace(0,1,6)"
-
-def parse_fractions(arg):
-    if arg.startswith("linspace") or arg.startswith("logspace"):
-        inside = arg.split('(', 1)[1][:-1]  # extract inside of parentheses
-        start, stop, n_points = inside.split(",")
-        start, stop = float(start), float(stop)
-        n_points = int(float(n_points))  # convert safely to int if decimal given
-
-        if arg.startswith("linspace"):
-            vals = np.linspace(start, stop, n_points)
-        else:
-            vals = np.logspace(start, stop, n_points)
-
-        # Format each number to 4 decimal places and convert to float
-        # (float conversion keeps usable numbers, format is for display/filenames)
-        return [float(f"{v:.4f}") for v in vals]
-
-    else:
-        # For comma-separated raw list input, parse and format similarly
-        return [float(f"{float(v):.4f}") for v in arg.split(",")]
-
-pars = argparse.ArgumentParser()
-pars.add_argument("runnr", type=int, help="Run number")
-pars.add_argument("n_reps", type=int, help="Number of repetitions")
-pars.add_argument("ellipsoidity", type=float, help="Ellipsoidity")
-pars.add_argument("fractions", type=parse_fractions, help="Fractions as linspace(x,y,n), logspace(x,y,n), or comma-separated list")
-args = pars.parse_args()
-print("runnr:", args.runnr)
-print("n_reps:", args.n_reps)
-print("ellipsoidity:", args.ellipsoidity)
-print("fractions:", args.fractions)
-
-runnr, n_reps, ellipsoidity, fractions = (args.runnr, args.n_reps, args.ellipsoidity, args.fractions)
-name = "EGF"
-key = "EGF_initial_conc"
 
 rc("text", usetex=True)
 #rc("font", family="sans-serif")
 #rc("text.latex", preamble=r"\usepackage{sfmath\renewcommand{\rmdefault}{cmss}}")
-'''
+
 # parameters
 name = "EGF"
 key = "EGF_initial_conc"
@@ -64,10 +25,8 @@ n_reps = 50
 ellipsoidity = 0.0
 base_value = p.get(f"{key}", 1.0)
 fractions = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
-'''
 dt = p["time step"]
 t_end = p["endtime"]
-
 
 input_dir = f"/home/yukinofj/code/steps_cell_signaling/Patrick/saved_objects/parameter_scan_EGF/run{runnr}"
 cmap = plt.colormaps["cool"]

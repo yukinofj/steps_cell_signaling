@@ -71,10 +71,10 @@ n_species = len(species_names)
 print("Species names: ", species_names)
 
 # subplot grid
-grid_size = math.ceil(math.sqrt(n_species))  # Prefer a square layout
+grid_size = math.ceil(math.sqrt(n_species))
 n_rows, n_cols = grid_size, math.ceil(n_species / grid_size)
 fig, axes = plt.subplots(n_rows, n_cols, figsize=(6, 4), constrained_layout=True)
-axes = axes.flatten()  # Flatten in case of 2D array
+axes = axes.flatten()
 for ax in axes.flat:
     ax.tick_params(axis='both', which='both', direction='in')
 colors = ["deepskyblue", "deeppink", "blueviolet"]
@@ -88,7 +88,8 @@ for idx, species in enumerate(species_names):
         std_data = std[idx]
         color = colors[i]
         ax.plot(times, mean_data, label = f"$E ={ellip}$", color=color)
-        ax.fill_between(times, mean_data - std_data, mean_data + std_data, color=color, alpha=0.25, edgecolor="none")
+        lower_bound = np.clip(mean_data - std_data, 0, None)
+        ax.fill_between(times, lower_bound, mean_data + std_data, color=color, alpha=0.25, edgecolor="none")
     label = species_latex.get(species, species)
     ax.set_ylabel(label)
     if idx >= n_species - n_cols:

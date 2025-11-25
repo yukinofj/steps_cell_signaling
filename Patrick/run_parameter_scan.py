@@ -13,21 +13,21 @@ import steps.API_2.geom as stgeom
 # parameters
 name = "EGF"
 key = "EGF_initial_conc"
-runnr = 12
-n_reps = 1
-ellipsoidity = 1.0
-base_c = p.get(f"{key}", 1.0)
-fractions = [0.1]#[0.8, 0.9, 0.95, 0.975, 0.99, 1.0]
+runnr = 15
+n_reps = 20
+ellipsoidity = 0.0
+base_value = p.get(f"{key}", 1.0)
+fractions = np.linspace(0.0, 2.0, 10) #run14 np.logspace(0, -10, num=10) #run13 np.logspace(-10, 0, num=10)
 dt = p["time step"]
 t_end = p["endtime"]
 home_dir = "/home/yukinofj/code/steps_cell_signaling/"
 
-# read base count
+# read base value
 xls_path = os.path.join(home_dir, p["big_model_mini_sph_df_path"])
 df = pd.read_excel(xls_path)
-c_row = df[df["Species"].str.strip() == f"{name}'"]
-base_count = c_row["exo init count"].values[0]
-print(f"Base count from excel: {base_count}")
+value_row = df[df["Species"].str.strip() == f"{name}'"]
+base_value = value_row["exo init count"].values[0]
+print(f"Base value from excel: {base_value}")
 
 # save dir
 save_dir = os.path.join(home_dir, f"Patrick/saved_objects/parameter_scan_{name}/run{runnr}")
