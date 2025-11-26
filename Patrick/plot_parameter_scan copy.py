@@ -32,7 +32,10 @@ input_dir = f"/home/yukinofj/code/steps_cell_signaling/Patrick/saved_objects/par
 cmap = plt.colormaps["cool"]
 norm = mcolors.Normalize(vmin = min(fractions), vmax = max(fractions))
 
-hdf_path_1 = f"{input_dir}/PSrun{runnr}_{name}{fractions[0]}_E{ellipsoidity}_N{n_reps}_dt{dt}_tend{t_end}" # PSrun{runnr}_{name}{fraction}_E{ellipsoidity}_N{n_reps}_dt{dt}_tend{t_end}
+def format_param(val, decimals=4):
+    return f"{val:.{decimals}g}"
+
+hdf_path_1 = f"{input_dir}/PSrun{runnr}_{name}{format_param(fractions[0])}_E{ellipsoidity}_N{n_reps}_dt{dt}_tend{t_end}" # PSrun{runnr}_{name}{fraction}_E{ellipsoidity}_N{n_reps}_dt{dt}_tend{t_end}
 hdf = stsave.HDF5Handler(hdf_path_1)
 results = hdf[name].results
 full_labels = [x.labels for x in results]

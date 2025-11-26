@@ -29,11 +29,14 @@ value_row = df[df["Species"].str.strip() == f"{name}'"]
 base_value = value_row["exo init count"].values[0]
 print(f"Base value from excel: {base_value}")
 
+def format_param(val, decimals=4):
+    return f"{val:.{decimals}g}"
+
 # save dir
 save_dir = os.path.join(home_dir, f"Patrick/saved_objects/parameter_scan_{name}/run{runnr}")
 os.makedirs(save_dir, exist_ok=True)
 print(f"Directory {save_dir} created.")
-save_path = f"{save_dir}/PSrun{runnr}_{name}{fractions}_E{ellipsoidity}_N{n_reps}_dt{dt}_tend{t_end}"
+#save_path = f"{save_dir}/PSrun{runnr}_{name}{fractions}_E{ellipsoidity}_N{n_reps}_dt{dt}_tend{t_end}"
 
 def set_initial_values(sim_manager, factor):
     # read excel
@@ -68,7 +71,7 @@ def set_initial_values(sim_manager, factor):
 
 # run sim for each parameter in "fractions"
 for frac in fractions:
-    file_name = f"PSrun{runnr}_{name}{frac}_E{ellipsoidity}_N{n_reps}_dt{dt}_tend{t_end}"
+    file_name = f"PSrun{runnr}_{name}{format_param(frac)}_E{ellipsoidity}_N{n_reps}_dt{dt}_tend{t_end}"
     save_path = os.path.join(save_dir, file_name)
 
     sm = SimManager(parameters=p,

@@ -11,12 +11,24 @@ import re
 import math
 from matplotlib import rc
 from parameters import p
+import argparse
 
-# input
-run = "testrun"
-n_reps = 100
-ellip_value = [0.0, 1.0] # np.linspace(0.1, 1.0, 10)
-runnr = 9
+# terminal input
+# cd /home/yukinofj/code/steps_cell_signaling/Patrick; python3 plot.py 9
+
+def format_param(val, decimals=4):
+    return float(f"{val:.{decimals}g}")
+
+
+pars = argparse.ArgumentParser()
+pars.add_argument("runnr", type=int)
+args = pars.parse_args()
+print("runnr:", args.runnr)
+
+runnr = args.runnr
+run = p["run"]
+n_reps = p["n_reps"]
+ellip_value = [0.0, 1.0] 
 dt = p["time step"]
 t_end = p["endtime"]
 
